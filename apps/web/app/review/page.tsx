@@ -1,0 +1,1 @@
+export default function Review(){return (<div className='card'><h1 className='h1'>Review</h1><p className='p'>Demo review. (SRS soon)</p></div>);}
