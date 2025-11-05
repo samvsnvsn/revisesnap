@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState } from "react";
 
-type NoteDoc = { id: string; title: string; folder?: string; drawing: string; text: string };
+type NoteDoc = { id: string; title: string; folder?: string; tags?: string[]; drawing: string; text: string };
 
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function getId(){
@@ -22,21 +22,25 @@ function saveDoc(doc: NoteDoc){
     localStorage.setItem("rs_note_"+doc.id, JSON.stringify(doc));
     const idx = JSON.parse(localStorage.getItem("rs_notes_index")||"[]");
     const rest = idx.filter((x:any)=>x.id!==doc.id);
-    rest.unshift({ id: doc.id, title: doc.title || "Blank note", updated: Date.now(), folder: doc.folder || "" });
+    rest.unshift({ id: doc.id, title: doc.title || "Blank note", updated: Date.now(), folder: doc.folder || "", tags: doc.tags || [] });
     localStorage.setItem("rs_notes_index", JSON.stringify(rest));
   }catch{}
 }
 
-type Mode = "type" | "draw" | "erase";
+type Mode = "type" | "draw" | "erase" | "auto";
 
 export default function BlankNote(){
   const [id] = useState<string>(getId());
   const [title, setTitle] = useState<string>("");
   const [currentFolder, setCurrentFolder] = useState<string>("");
-  const [mode, setMode] = useState<Mode>("type");
+  const [mode, setMode] = useState<Mode>("auto");
   const [pen, setPen] = useState<string>("#0F172A");
   const [size, setSize] = useState<number>(3);
   const [drawData, setDrawData] = useState<string>("");
+  const [showMathInput, setShowMathInput] = useState(false);
+  const [mathLatex, setMathLatex] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState("");
 
   const paperW = 900, paperH = 1200;
   const editorRef = useRef<HTMLDivElement>(null);
@@ -44,6 +48,7 @@ export default function BlankNote(){
   const drawing = useRef<boolean>(false);
   const last = useRef<{x:number;y:number}|null>(null);
   const saveTimer = useRef<any>(null);
+  const isPenInput = useRef<boolean>(false);
 
   useEffect(()=>{
     const existing = loadDoc(id);
@@ -51,6 +56,7 @@ export default function BlankNote(){
       setTitle(existing.title||"Blank note");
       setDrawData(existing.drawing||"");
       setCurrentFolder(existing.folder||"");
+      setTags(existing.tags||[]);
       setTimeout(()=>{
         if (editorRef.current) editorRef.current.innerHTML = existing.text || "";
         restoreCanvas();
@@ -93,11 +99,26 @@ export default function BlankNote(){
         id,
         title,
         folder: currentFolder || "",
+        tags: tags || [],
         drawing: canvasRef.current ? canvasRef.current.toDataURL("image/png") : "",
         text: editorRef.current?.innerHTML || ""
       };
       saveDoc(doc);
     }, 350);
+  }
+
+  function addTag(){
+    const trimmed = newTag.trim();
+    if (!trimmed || tags.includes(trimmed)) return;
+    const updated = [...tags, trimmed];
+    setTags(updated);
+    setNewTag("");
+    scheduleSave();
+  }
+
+  function removeTag(tag: string){
+    setTags(tags.filter(t => t !== tag));
+    scheduleSave();
   }
 
   function cmd(name: string, value?: any){
@@ -116,30 +137,58 @@ export default function BlankNote(){
   }
 
   function onPointerDown(e: React.PointerEvent){
+    // Detect if it's a pen/stylus input
+    isPenInput.current = e.pointerType === "pen";
+
+    // Auto mode: pen = draw, touch/mouse = type
+    if (mode === "auto") {
+      if (isPenInput.current) {
+        // Pen detected - draw mode
+      } else {
+        // Touch or mouse - allow typing
+        return;
+      }
+    } else if (mode === "type") {
+      return;
+    }
+
     e.preventDefault(); e.stopPropagation();
-    if (mode==="type") return;
     const c = canvasRef.current!; const rect = c.getBoundingClientRect();
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
-    drawing.current = true; try{ (e.target as HTMLElement).setPointerCapture?.(e.pointerId); }catch{};
-    last.current = {x,y};
+    drawing.current = true;
+    try{ (e.target as HTMLElement).setPointerCapture?.(e.pointerId); }catch{};
+    last.current = {x, y};
   }
+
   function onPointerMove(e: React.PointerEvent){
-    e.preventDefault(); e.stopPropagation();
     if (!drawing.current) return;
+
+    e.preventDefault(); e.stopPropagation();
     const c = canvasRef.current!; const rect = c.getBoundingClientRect();
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
     const ctx = c.getContext("2d"); if (!ctx) return;
+
+    // Pressure sensitivity for pen input
+    let lineWidth = size;
+    if (isPenInput.current && e.pressure > 0) {
+      lineWidth = size * (0.5 + e.pressure * 1.5); // Scale based on pressure
+    }
+
     ctx.lineCap = "round"; ctx.lineJoin = "round";
-    ctx.lineWidth = size; ctx.strokeStyle = mode==="erase" ? "rgba(0,0,0,1)" : pen;
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = mode==="erase" ? "rgba(0,0,0,1)" : pen;
     ctx.globalCompositeOperation = mode==="erase" ? "destination-out" : "source-over";
     ctx.beginPath();
     const p = last.current || {x,y};
     ctx.moveTo(p.x, p.y); ctx.lineTo(x, y); ctx.stroke();
     last.current = {x,y};
   }
+
   function onPointerUp(){
     if (!drawing.current) return;
-    drawing.current = false; last.current = null;
+    drawing.current = false;
+    last.current = null;
+    isPenInput.current = false;
     if (canvasRef.current) setDrawData(canvasRef.current.toDataURL("image/png"));
     scheduleSave();
   }
@@ -184,7 +233,33 @@ export default function BlankNote(){
     doc.save((title || "note") + ".pdf");
   }
 
-  useEffect(()=>{ if (mode==="type") editorRef.current?.focus(); }, [mode]);
+  function insertMath(){
+    if (!mathLatex.trim()) return;
+    // Use Unicode math symbols or wrap in a styled span
+    const mathHtml = `<span class="math-inline" contenteditable="false" style="background:#f0f9ff;padding:2px 6px;border-radius:6px;font-family:serif;color:#0369a1;margin:0 2px;">$${mathLatex}$</span>&nbsp;`;
+    cmd("insertHTML", mathHtml);
+    setShowMathInput(false);
+    setMathLatex("");
+  }
+
+  useEffect(()=>{
+    // Keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch(e.key.toLowerCase()) {
+          case 'b': e.preventDefault(); cmd("bold"); break;
+          case 'i': e.preventDefault(); cmd("italic"); break;
+          case 'u': e.preventDefault(); cmd("underline"); break;
+          case 's': e.preventDefault(); scheduleSave(); break;
+          case 'm': e.preventDefault(); setShowMathInput(true); break;
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(()=>{ if (mode==="type" || mode==="auto") editorRef.current?.focus(); }, [mode]);
 
   return (
     <div className="wrap">
@@ -195,18 +270,38 @@ export default function BlankNote(){
             <option value="">(no folder)</option>
             {(typeof window!=="undefined" ? (JSON.parse(localStorage.getItem("rs_folders")||"[]") as string[]) : []).map(f=>(<option key={f} value={f}>{f}</option>))}
           </select>
-          <button className={"btn"+(mode==="type"?" btn-primary":"")} onClick={()=>setMode("type")} title="Type">Type</button>
-          <button className={"btn"+(mode==="draw"?" btn-primary":"")} onClick={()=>setMode("draw")} title="Draw">Draw</button>
-          <button className={"btn"+(mode==="erase"?" btn-primary":"")} onClick={()=>setMode("erase")} title="Erase">Erase</button>
+          <button className={"btn"+(mode==="auto"?" btn-primary":"")} onClick={()=>setMode("auto")} title="Auto: Pen draws, touch/mouse types">✨ Auto</button>
+          <button className={"btn"+(mode==="type"?" btn-primary":"")} onClick={()=>setMode("type")} title="Type">⌨️ Type</button>
+          <button className={"btn"+(mode==="draw"?" btn-primary":"")} onClick={()=>setMode("draw")} title="Draw">✏️ Draw</button>
+          <button className={"btn"+(mode==="erase"?" btn-primary":"")} onClick={()=>setMode("erase")} title="Erase">🧹 Erase</button>
+        </div>
+        <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+          <b style={{fontSize:14}}>🏷️ Tags:</b>
+          {tags.map(tag => (
+            <span key={tag} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",background:"#e0f2fe",color:"#0369a1",borderRadius:8,fontSize:13}}>
+              {tag}
+              <button onClick={()=>removeTag(tag)} style={{border:0,background:"transparent",cursor:"pointer",padding:0,marginLeft:2,color:"#0369a1",fontWeight:"bold"}}>×</button>
+            </span>
+          ))}
+          <input
+            className="input"
+            placeholder="Add tag..."
+            value={newTag}
+            onChange={e=>setNewTag(e.target.value)}
+            onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); addTag(); }}}
+            style={{width:120,padding:"4px 10px",fontSize:13}}
+          />
+          <button className="btn btn-ghost" onClick={addTag} style={{padding:"4px 10px",fontSize:13}}>+ Add</button>
         </div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-          <button className="btn btn-ghost" onClick={()=>cmd("bold")}><b>B</b></button>
-          <button className="btn btn-ghost" onClick={()=>cmd("italic")}><i>I</i></button>
-          <button className="btn btn-ghost" onClick={()=>cmd("underline")}><u>U</u></button>
+          <button className="btn btn-ghost" onClick={()=>cmd("bold")} title="Bold (Ctrl+B)"><b>B</b></button>
+          <button className="btn btn-ghost" onClick={()=>cmd("italic")} title="Italic (Ctrl+I)"><i>I</i></button>
+          <button className="btn btn-ghost" onClick={()=>cmd("underline")} title="Underline (Ctrl+U)"><u>U</u></button>
           <button className="btn btn-ghost" onClick={()=>cmd("formatBlock","H2")}>H2</button>
           <button className="btn btn-ghost" onClick={()=>cmd("insertUnorderedList")}>• List</button>
           <button className="btn btn-ghost" onClick={()=>cmd("insertOrderedList")}>1. List</button>
-          <label className="btn btn-ghost" style={{cursor:"pointer"}}>Insert image
+          <button className="btn btn-ghost" onClick={()=>setShowMathInput(true)} title="Insert Math (Ctrl+M)">∑ Math</button>
+          <label className="btn btn-ghost" style={{cursor:"pointer"}}>🖼️ Image
             <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{ const f=e.target.files?.[0]; if(f) insertImageFile(f); (e.currentTarget as HTMLInputElement).value=""; }} />
           </label>
           <div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center"}}>
@@ -216,6 +311,32 @@ export default function BlankNote(){
             <button className="btn" onClick={exportPdf}>Export PDF</button>
           </div>
         </div>
+        {showMathInput && (
+          <div style={{marginTop:10,padding:12,background:"#f0f9ff",borderRadius:12,border:"1px solid #bae6fd"}}>
+            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+              <input
+                className="input"
+                placeholder="LaTeX: e.g. x^2 + y^2 = r^2"
+                value={mathLatex}
+                autoFocus
+                onChange={e=>setMathLatex(e.target.value)}
+                onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); insertMath(); } }}
+                style={{flex:1,minWidth:250}}
+              />
+              <button className="btn btn-primary" onClick={insertMath}>Insert</button>
+              <button className="btn btn-ghost" onClick={()=>{setShowMathInput(false); setMathLatex("");}}>Cancel</button>
+            </div>
+            <div className="p" style={{marginTop:6,fontSize:12}}>
+              Quick symbols: α β γ Δ θ λ π Σ ∫ √ ∞ ≈ ≠ ≤ ≥ ± × ÷ ∂
+              <button className="btn btn-ghost" style={{marginLeft:8,padding:"4px 8px"}} onClick={()=>setMathLatex(mathLatex+"∫")}>∫</button>
+              <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>setMathLatex(mathLatex+"Σ")}>Σ</button>
+              <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>setMathLatex(mathLatex+"√")}>√</button>
+              <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>setMathLatex(mathLatex+"π")}>π</button>
+              <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>setMathLatex(mathLatex+"θ")}>θ</button>
+              <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>setMathLatex(mathLatex+"Δ")}>Δ</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="canvas-wrap" style={{position:"relative", width:paperW, height:paperH, marginTop:12}}>
@@ -224,12 +345,28 @@ export default function BlankNote(){
           className="note-editor"
           contentEditable
           suppressContentEditableWarning
-          style={{ position:"absolute", inset:0, padding:40, outline:"none", fontSize:16, lineHeight:1.6, overflow:"hidden" }}
+          style={{
+            position:"absolute",
+            inset:0,
+            padding:40,
+            outline:"none",
+            fontSize:16,
+            lineHeight:1.6,
+            overflow:"hidden",
+            zIndex: 2,
+            pointerEvents: mode==="draw" || mode==="erase" ? "none" : "auto"
+          }}
           onInput={()=>{ scheduleSave(); }}
         ></div>
         <canvas
           ref={canvasRef}
-          style={{ position:"absolute", inset:0, pointerEvents: mode==="type" ? "none" : "auto", touchAction:"none" }}
+          style={{
+            position:"absolute",
+            inset:0,
+            pointerEvents: mode==="type" ? "none" : "auto",
+            touchAction:"none",
+            zIndex: mode==="auto" ? 1 : 2
+          }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}

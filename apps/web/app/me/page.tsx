@@ -37,6 +37,67 @@ export default function Me(){
     setProfile({}); try{ window.dispatchEvent(new Event("rs_profile_changed")); }catch{}
   }
 
+  function exportData(){
+    const data = {
+      profile: JSON.parse(localStorage.getItem("rs_profile")||"{}"),
+      notes_index: JSON.parse(localStorage.getItem("rs_notes_index")||"[]"),
+      folders: JSON.parse(localStorage.getItem("rs_folders")||"[]"),
+      review_cards: JSON.parse(localStorage.getItem("rs_review_cards")||"[]"),
+      review_sessions: JSON.parse(localStorage.getItem("rs_review_sessions")||"{}"),
+      last_chunks: JSON.parse(localStorage.getItem("rs_last_chunks")||"{}"),
+      notes: {} as Record<string,any>
+    };
+
+    // Export all notes
+    const idx = JSON.parse(localStorage.getItem("rs_notes_index")||"[]");
+    idx.forEach((n:any) => {
+      const note = localStorage.getItem("rs_note_"+n.id);
+      if (note) data.notes[n.id] = JSON.parse(note);
+    });
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `revisesnap-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(e: React.ChangeEvent<HTMLInputElement>){
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const data = JSON.parse(reader.result as string);
+
+        // Restore data
+        if (data.profile) localStorage.setItem("rs_profile", JSON.stringify(data.profile));
+        if (data.notes_index) localStorage.setItem("rs_notes_index", JSON.stringify(data.notes_index));
+        if (data.folders) localStorage.setItem("rs_folders", JSON.stringify(data.folders));
+        if (data.review_cards) localStorage.setItem("rs_review_cards", JSON.stringify(data.review_cards));
+        if (data.review_sessions) localStorage.setItem("rs_review_sessions", JSON.stringify(data.review_sessions));
+        if (data.last_chunks) localStorage.setItem("rs_last_chunks", JSON.stringify(data.last_chunks));
+
+        // Restore notes
+        if (data.notes){
+          Object.entries(data.notes).forEach(([id, note])=>{
+            localStorage.setItem("rs_note_"+id, JSON.stringify(note));
+          });
+        }
+
+        alert("Data imported successfully! Refreshing page...");
+        window.location.reload();
+      }catch(err:any){
+        alert("Error importing data: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
   return (
     <div className="wrap">
       <div className="card">
@@ -62,8 +123,9 @@ export default function Me(){
           <div>
             <label className="p">Theme</label>
             <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>
-              <button className={"btn"+((profile.theme||"default")==="default"?" btn-primary":"")} onClick={()=>setField("theme","default")}>Default</button>
-              <button className={"btn"+((profile.theme||"default")==="warm"?" btn-primary":"")} onClick={()=>setField("theme","warm")}>Warm (soft orange)</button>
+              <button className={"btn"+((profile.theme||"default")==="default"?" btn-primary":"")} onClick={()=>setField("theme","default")}>☀️ Default</button>
+              <button className={"btn"+((profile.theme||"default")==="warm"?" btn-primary":"")} onClick={()=>setField("theme","warm")}>🧡 Warm</button>
+              <button className={"btn"+((profile.theme||"default")==="dark"?" btn-primary":"")} onClick={()=>setField("theme","dark")}>🌙 Dark</button>
             </div>
           </div>
           <div>
@@ -95,6 +157,19 @@ export default function Me(){
               <input className="input" type="color" value={profile.cardColor || "#FFFFFF"} onChange={e=>setField("cardColor", e.target.value)} />
               <button className="btn btn-ghost" onClick={()=>setField("cardColor","")}>Reset</button>
             </div>
+          </div>
+          <div>
+            <label className="p">Backup & Restore</label>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>
+              <button className="btn btn-ghost" onClick={exportData}>📥 Export All Data</button>
+              <label className="btn btn-ghost" style={{cursor:"pointer"}}>
+                📤 Import Data
+                <input type="file" accept=".json" style={{display:"none"}} onChange={importData} />
+              </label>
+            </div>
+            <p className="p" style={{marginTop:6,fontSize:12}}>
+              Export your notes, review cards, and settings as JSON. Import to restore.
+            </p>
           </div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             <button className="btn" onClick={resetDefaults}>Reset to defaults</button>

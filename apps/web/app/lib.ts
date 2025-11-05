@@ -25,12 +25,31 @@ export function buildUKFromText(text: string, level: UKLevel, subject: UKSubject
   const sents = text.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(Boolean);
   const cmds = UK_COMMAND_WORDS[subject];
   const qs = [];
+
+  // Generate different types of questions based on level
   for (let i=0; i<Math.min(6, sents.length); i++){
-    const stem = sents[i].split(/[.;:!?]/)[0];
-    const cmd = cmds[i % cmds.length];
-    const t = `${cmd}: ${stem}${/[.?!]$/.test(stem)?"":"."}`;
-    qs.push(t);
+    const sent = sents[i];
+    const words = sent.split(/\s+/);
+
+    if (i % 3 === 0 && words.length > 8) {
+      // Fill-in-the-blank question
+      const blankIdx = Math.floor(words.length / 2);
+      const blank = words[blankIdx];
+      const q = words.map((w, idx) => idx === blankIdx ? "______" : w).join(" ");
+      qs.push(`Fill in the blank: ${q}`);
+    } else if (i % 3 === 1) {
+      // Command word question (existing style)
+      const stem = sent.split(/[.;:!?]/)[0];
+      const cmd = cmds[i % cmds.length];
+      const difficulty = level === "GCSE" ? " (4 marks)" : level === "A-level" ? " (6 marks)" : "";
+      qs.push(`${cmd}: ${stem}${/[.?!]$/.test(stem)?"":"."}${difficulty}`);
+    } else {
+      // True/False or factual question
+      const stem = sent.split(/[.;:!?]/)[0];
+      qs.push(`Is this statement correct? "${stem}"`);
+    }
   }
+
   const chunks = sents.slice(0,15).map((t,i)=>({ id:String(i+1), materialId: Date.now().toString(), text:t }));
   return { questions: qs, chunks };
 }
