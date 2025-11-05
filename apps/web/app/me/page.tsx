@@ -5,7 +5,7 @@ type Profile = {
   name?: string;
   avatar?: string;
   weeklyGoal?: number;
-  theme?: "default"|"warm";
+  theme?: "default"|"warm"|"dark";
   customBg?: string;
   cardColor?: string;
 };

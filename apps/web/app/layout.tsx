@@ -1,10 +1,12 @@
 import "./styles.css";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import SWRegister from "./sw-register";
 import TabBar from "./components/TabBar";
 import InstallPrompt from "./components/InstallPrompt";
 import ThemeSync from "./components/ThemeSync";
-import PomodoroTimer from "./components/PomodoroTimer";
+
+const PomodoroTimer = dynamic(() => import("./components/PomodoroTimer"), { ssr: false });
 
 export const metadata = {
   title: "ReviseSnap",
