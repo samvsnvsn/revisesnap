@@ -54,6 +54,52 @@ body.warm{ --bg:#FFF7ED; }
 
 .note-editor{background:var(--surface);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
 
+/* Templates */
+.template-blank{background:var(--surface)}
+.template-cornell{
+  background:var(--surface);
+  background-image:linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size:100% 100%, 250px 100%;
+  background-position:0 0, 0 0;
+}
+.template-cornell::before{
+  content:"";
+  position:absolute;
+  left:250px;
+  top:0;
+  bottom:150px;
+  width:2px;
+  background:var(--border);
+  z-index:1;
+}
+.template-cornell::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:150px;
+  height:2px;
+  background:var(--border);
+  z-index:1;
+}
+.template-grid{
+  background:var(--surface);
+  background-image:
+    linear-gradient(to right, rgba(229, 231, 235, 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(229, 231, 235, 0.3) 1px, transparent 1px);
+  background-size:20px 20px;
+}
+.template-lined{
+  background:var(--surface);
+  background-image:linear-gradient(to bottom, transparent 31px, var(--border) 1px);
+  background-size:100% 32px;
+}
+.template-dots{
+  background:var(--surface);
+  background-image:radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size:20px 20px;
+}
+
 /* Tablet mode */
 @media (min-width:1024px){
   .container{max-width:1200px}

@@ -27,7 +27,9 @@ function saveDoc(doc: NoteDoc){
   }catch{}
 }
 
-type Mode = "type" | "draw" | "erase" | "auto";
+type Mode = "type" | "draw" | "erase" | "auto" | "highlight";
+type HighlightColor = "yellow" | "green" | "pink" | "blue";
+type Template = "blank" | "cornell" | "grid" | "lined" | "dots";
 
 export default function BlankNote(){
   const [id] = useState<string>(getId());
@@ -36,11 +38,13 @@ export default function BlankNote(){
   const [mode, setMode] = useState<Mode>("auto");
   const [pen, setPen] = useState<string>("#0F172A");
   const [size, setSize] = useState<number>(3);
+  const [highlightColor, setHighlightColor] = useState<HighlightColor>("yellow");
   const [drawData, setDrawData] = useState<string>("");
   const [showMathInput, setShowMathInput] = useState(false);
   const [mathLatex, setMathLatex] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
+  const [template, setTemplate] = useState<Template>("blank");
 
   const paperW = 900, paperH = 1200;
   const editorRef = useRef<HTMLDivElement>(null);
@@ -168,20 +172,42 @@ export default function BlankNote(){
     const x = e.clientX - rect.left, y = e.clientY - rect.top;
     const ctx = c.getContext("2d"); if (!ctx) return;
 
-    // Pressure sensitivity for pen input
+    // Determine line width
     let lineWidth = size;
-    if (isPenInput.current && e.pressure > 0) {
-      lineWidth = size * (0.5 + e.pressure * 1.5); // Scale based on pressure
+    if (mode === "highlight") {
+      lineWidth = 20; // Wide highlighter
+    } else if (isPenInput.current && e.pressure > 0) {
+      lineWidth = size * (0.5 + e.pressure * 1.5); // Pressure sensitivity
     }
 
-    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    // Determine stroke style
+    let strokeStyle = pen;
+    let globalAlpha = 1.0;
+
+    if (mode === "highlight") {
+      const highlightColors = {
+        yellow: "rgba(255, 255, 0, 0.4)",
+        green: "rgba(34, 197, 94, 0.4)",
+        pink: "rgba(236, 72, 153, 0.4)",
+        blue: "rgba(59, 130, 246, 0.4)"
+      };
+      strokeStyle = highlightColors[highlightColor];
+      globalAlpha = 1.0;
+    }
+
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.lineWidth = lineWidth;
-    ctx.strokeStyle = mode==="erase" ? "rgba(0,0,0,1)" : pen;
+    ctx.strokeStyle = mode==="erase" ? "rgba(0,0,0,1)" : strokeStyle;
+    ctx.globalAlpha = globalAlpha;
     ctx.globalCompositeOperation = mode==="erase" ? "destination-out" : "source-over";
     ctx.beginPath();
     const p = last.current || {x,y};
     ctx.moveTo(p.x, p.y); ctx.lineTo(x, y); ctx.stroke();
     last.current = {x,y};
+
+    // Reset alpha
+    ctx.globalAlpha = 1.0;
   }
 
   function onPointerUp(){
@@ -273,7 +299,49 @@ export default function BlankNote(){
           <button className={"btn"+(mode==="auto"?" btn-primary":"")} onClick={()=>setMode("auto")} title="Auto: Pen draws, touch/mouse types">✨ Auto</button>
           <button className={"btn"+(mode==="type"?" btn-primary":"")} onClick={()=>setMode("type")} title="Type">⌨️ Type</button>
           <button className={"btn"+(mode==="draw"?" btn-primary":"")} onClick={()=>setMode("draw")} title="Draw">✏️ Draw</button>
+          <button className={"btn"+(mode==="highlight"?" btn-primary":"")} onClick={()=>setMode("highlight")} title="Highlighter">🖍️ Highlight</button>
           <button className={"btn"+(mode==="erase"?" btn-primary":"")} onClick={()=>setMode("erase")} title="Erase">🧹 Erase</button>
+        </div>
+        {mode === "highlight" && (
+          <div style={{marginTop:10,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+            <b style={{fontSize:14}}>Colors:</b>
+            <button
+              className={"btn"+(highlightColor==="yellow"?" btn-primary":"")}
+              onClick={()=>setHighlightColor("yellow")}
+              style={{background:highlightColor==="yellow"?"#fef08a":"transparent",border:"2px solid #fef08a"}}
+            >
+              Yellow
+            </button>
+            <button
+              className={"btn"+(highlightColor==="green"?" btn-primary":"")}
+              onClick={()=>setHighlightColor("green")}
+              style={{background:highlightColor==="green"?"#86efac":"transparent",border:"2px solid #86efac"}}
+            >
+              Green
+            </button>
+            <button
+              className={"btn"+(highlightColor==="pink"?" btn-primary":"")}
+              onClick={()=>setHighlightColor("pink")}
+              style={{background:highlightColor==="pink"?"#f9a8d4":"transparent",border:"2px solid #f9a8d4"}}
+            >
+              Pink
+            </button>
+            <button
+              className={"btn"+(highlightColor==="blue"?" btn-primary":"")}
+              onClick={()=>setHighlightColor("blue")}
+              style={{background:highlightColor==="blue"?"#93c5fd":"transparent",border:"2px solid #93c5fd"}}
+            >
+              Blue
+            </button>
+          </div>
+        )}
+        <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+          <b style={{fontSize:14}}>📋 Template:</b>
+          <button className={"btn btn-ghost"+(template==="blank"?" btn-primary":"")} onClick={()=>setTemplate("blank")}>Blank</button>
+          <button className={"btn btn-ghost"+(template==="cornell"?" btn-primary":"")} onClick={()=>setTemplate("cornell")}>Cornell</button>
+          <button className={"btn btn-ghost"+(template==="grid"?" btn-primary":"")} onClick={()=>setTemplate("grid")}>Grid</button>
+          <button className={"btn btn-ghost"+(template==="lined"?" btn-primary":"")} onClick={()=>setTemplate("lined")}>Lined</button>
+          <button className={"btn btn-ghost"+(template==="dots"?" btn-primary":"")} onClick={()=>setTemplate("dots")}>Dots</button>
         </div>
         <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           <b style={{fontSize:14}}>🏷️ Tags:</b>
@@ -339,7 +407,7 @@ export default function BlankNote(){
         )}
       </div>
 
-      <div className="canvas-wrap" style={{position:"relative", width:paperW, height:paperH, marginTop:12}}>
+      <div className={`canvas-wrap template-${template}`} style={{position:"relative", width:paperW, height:paperH, marginTop:12}}>
         <div
           ref={editorRef}
           className="note-editor"

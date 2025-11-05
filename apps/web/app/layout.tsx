@@ -4,6 +4,7 @@ import SWRegister from "./sw-register";
 import TabBar from "./components/TabBar";
 import InstallPrompt from "./components/InstallPrompt";
 import ThemeSync from "./components/ThemeSync";
+import PomodoroTimer from "./components/PomodoroTimer";
 
 export const metadata = {
   title: "ReviseSnap",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main className="container">{children}</main>
         <ThemeSync/>
+        <PomodoroTimer/>
         <footer className="foot">Powered by <a href="https://arteloux.com" target="_blank" rel="noreferrer">Arteloux Ltd</a></footer>
         <TabBar/>
         <SWRegister/>
