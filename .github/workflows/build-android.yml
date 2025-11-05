@@ -19,12 +19,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: apps/web/package-lock.json
 
       - name: Install dependencies
         working-directory: apps/web
-        run: npm install
+        run: npm ci || npm install
 
       - name: Build Next.js app
         working-directory: apps/web
@@ -39,6 +37,20 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Setup Gradle Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Add Android platform
+        working-directory: apps/web
+        run: npx cap add android || echo "Android platform already exists"
+
       - name: Sync Capacitor
         working-directory: apps/web
         run: npx cap sync android
@@ -51,12 +63,16 @@ jobs:
         working-directory: apps/web/android
         run: ./gradlew assembleDebug --no-daemon
 
+      - name: List APK files
+        run: find apps/web/android/app/build/outputs -name "*.apk" || echo "No APK found"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ReviseSnap-debug-apk
           path: apps/web/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+          if-no-files-found: error
 
       - name: Create Release (optional)
         if: github.ref == 'refs/heads/main'
