@@ -39,6 +39,8 @@ export default function BlankNote(){
   const [pen, setPen] = useState<string>("#0F172A");
   const [size, setSize] = useState<number>(3);
   const [highlightColor, setHighlightColor] = useState<HighlightColor>("yellow");
+  const [highlightOpacity, setHighlightOpacity] = useState<number>(0.3);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [drawData, setDrawData] = useState<string>("");
   const [showMathInput, setShowMathInput] = useState(false);
   const [mathLatex, setMathLatex] = useState("");
@@ -186,10 +188,10 @@ export default function BlankNote(){
 
     if (mode === "highlight") {
       const highlightColors = {
-        yellow: "rgba(255, 255, 0, 0.4)",
-        green: "rgba(34, 197, 94, 0.4)",
-        pink: "rgba(236, 72, 153, 0.4)",
-        blue: "rgba(59, 130, 246, 0.4)"
+        yellow: `rgba(255, 255, 0, ${highlightOpacity})`,
+        green: `rgba(34, 197, 94, ${highlightOpacity})`,
+        pink: `rgba(236, 72, 153, ${highlightOpacity})`,
+        blue: `rgba(59, 130, 246, ${highlightOpacity})`
       };
       strokeStyle = highlightColors[highlightColor];
       globalAlpha = 1.0;
@@ -271,6 +273,13 @@ export default function BlankNote(){
   useEffect(()=>{
     // Keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
+      // ESC to exit fullscreen
+      if (e.key === "Escape" && isFullscreen) {
+        e.preventDefault();
+        setIsFullscreen(false);
+        return;
+      }
+
       if (e.ctrlKey || e.metaKey) {
         switch(e.key.toLowerCase()) {
           case 'b': e.preventDefault(); cmd("bold"); break;
@@ -283,13 +292,33 @@ export default function BlankNote(){
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isFullscreen]);
 
   useEffect(()=>{ if (mode==="type" || mode==="auto") editorRef.current?.focus(); }, [mode]);
 
   return (
-    <div className="wrap">
+    <div className="wrap" style={isFullscreen ? {
+      position: "fixed",
+      inset: 0,
+      zIndex: 1000,
+      background: "var(--bg)",
+      overflow: "auto",
+      padding: "16px"
+    } : undefined}>
       <div className="card">
+        {isFullscreen && (
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:12,borderBottom:"1px solid var(--border-light)"}}>
+            <span style={{fontSize:14,color:"var(--muted)",fontWeight:500}}>📝 Fullscreen Editor</span>
+            <button
+              className="btn btn-ghost"
+              onClick={()=>setIsFullscreen(false)}
+              title="Exit Fullscreen (ESC)"
+              style={{fontSize:12,padding:"6px 12px"}}
+            >
+              ⊗ Exit Fullscreen
+            </button>
+          </div>
+        )}
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginBottom:10}}>
           <input className="input" style={{flex:1, minWidth:200, padding:"10px 12px", fontSize:15}} value={title} onChange={e=>{ setTitle(e.target.value); scheduleSave(); }} placeholder="Untitled note" />
           <select className="input" style={{padding:"10px 12px", fontSize:13, minWidth:120}} value={currentFolder} onChange={e=>{ setCurrentFolder(e.target.value); scheduleSave(); }}>
@@ -306,35 +335,49 @@ export default function BlankNote(){
         </div>
         {mode === "highlight" && (
           <div style={{marginTop:10,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-            <b style={{fontSize:14}}>Colors:</b>
+            <b style={{fontSize:12,color:"var(--muted)"}}>Colors:</b>
             <button
-              className={"btn"+(highlightColor==="yellow"?" btn-primary":"")}
+              className={"btn btn-ghost"+(highlightColor==="yellow"?" btn-primary":"")}
               onClick={()=>setHighlightColor("yellow")}
-              style={{background:highlightColor==="yellow"?"#fef08a":"transparent",border:"2px solid #fef08a"}}
+              style={{fontSize:11,padding:"6px 10px",background:highlightColor==="yellow"?"#fef08a":"transparent",border:"1px solid #fef08a"}}
             >
               Yellow
             </button>
             <button
-              className={"btn"+(highlightColor==="green"?" btn-primary":"")}
+              className={"btn btn-ghost"+(highlightColor==="green"?" btn-primary":"")}
               onClick={()=>setHighlightColor("green")}
-              style={{background:highlightColor==="green"?"#86efac":"transparent",border:"2px solid #86efac"}}
+              style={{fontSize:11,padding:"6px 10px",background:highlightColor==="green"?"#86efac":"transparent",border:"1px solid #86efac"}}
             >
               Green
             </button>
             <button
-              className={"btn"+(highlightColor==="pink"?" btn-primary":"")}
+              className={"btn btn-ghost"+(highlightColor==="pink"?" btn-primary":"")}
               onClick={()=>setHighlightColor("pink")}
-              style={{background:highlightColor==="pink"?"#f9a8d4":"transparent",border:"2px solid #f9a8d4"}}
+              style={{fontSize:11,padding:"6px 10px",background:highlightColor==="pink"?"#f9a8d4":"transparent",border:"1px solid #f9a8d4"}}
             >
               Pink
             </button>
             <button
-              className={"btn"+(highlightColor==="blue"?" btn-primary":"")}
+              className={"btn btn-ghost"+(highlightColor==="blue"?" btn-primary":"")}
               onClick={()=>setHighlightColor("blue")}
-              style={{background:highlightColor==="blue"?"#93c5fd":"transparent",border:"2px solid #93c5fd"}}
+              style={{fontSize:11,padding:"6px 10px",background:highlightColor==="blue"?"#93c5fd":"transparent",border:"1px solid #93c5fd"}}
             >
               Blue
             </button>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginLeft:8}}>
+              <label style={{fontSize:11,color:"var(--muted)",whiteSpace:"nowrap"}}>Opacity:</label>
+              <input
+                type="range"
+                min={0.1}
+                max={0.6}
+                step={0.05}
+                value={highlightOpacity}
+                onChange={e=>setHighlightOpacity(Number(e.target.value))}
+                style={{width:100}}
+                title={`Opacity: ${Math.round(highlightOpacity * 100)}%`}
+              />
+              <span style={{fontSize:11,color:"var(--muted)",minWidth:35}}>{Math.round(highlightOpacity * 100)}%</span>
+            </div>
           </div>
         )}
         <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
@@ -380,6 +423,9 @@ export default function BlankNote(){
           <div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
             <input type="color" value={pen} onChange={e=>setPen(e.target.value)} title="Pen color" style={{width:32,height:32,border:"1px solid var(--border)",borderRadius:6,cursor:"pointer"}} />
             <input type="range" min={1} max={16} value={size} onChange={e=>setSize(Number(e.target.value))} title="Pen size" style={{width:80}} />
+            <button className="btn btn-ghost" onClick={()=>setIsFullscreen(!isFullscreen)} title={isFullscreen?"Exit Fullscreen":"Enter Fullscreen"} style={{fontSize:12, padding:"6px 12px"}}>
+              {isFullscreen ? "⊗" : "⛶"} {isFullscreen ? "Exit" : "Fullscreen"}
+            </button>
             <button className="btn btn-ghost" onClick={exportPng} style={{fontSize:12, padding:"6px 12px"}}>PNG</button>
             <button className="btn btn-ghost" onClick={exportPdf} style={{fontSize:12, padding:"6px 12px"}}>PDF</button>
           </div>
@@ -412,7 +458,17 @@ export default function BlankNote(){
         )}
       </div>
 
-      <div className={`canvas-wrap template-${template}`} style={{position:"relative", width:paperW, height:paperH, marginTop:12}}>
+      <div className={`canvas-wrap template-${template}`} style={{
+        position:"relative",
+        width: isFullscreen ? "100%" : paperW,
+        maxWidth: isFullscreen ? "1400px" : paperW,
+        height: isFullscreen ? "auto" : paperH,
+        minHeight: isFullscreen ? "calc(100vh - 200px)" : paperH,
+        aspectRatio: isFullscreen ? "3/4" : undefined,
+        marginTop:12,
+        marginLeft: isFullscreen ? "auto" : 0,
+        marginRight: isFullscreen ? "auto" : 0
+      }}>
         <div
           ref={editorRef}
           className="note-editor"
