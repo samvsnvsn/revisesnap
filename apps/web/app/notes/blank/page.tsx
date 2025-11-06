@@ -364,6 +364,9 @@ export default function BlankNote(){
           <button className="btn btn-ghost" onClick={addTag} style={{padding:"6px 10px",fontSize:12}}>+ Add</button>
         </div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+          <button className="btn btn-ghost" onClick={()=>cmd("undo")} title="Undo (Ctrl+Z)" style={{fontSize:12, padding:"6px 10px"}}>↶ Undo</button>
+          <button className="btn btn-ghost" onClick={()=>cmd("redo")} title="Redo (Ctrl+Y)" style={{fontSize:12, padding:"6px 10px"}}>↷ Redo</button>
+          <div style={{width:1,height:24,background:"var(--border-light)",margin:"0 4px"}}></div>
           <button className="btn btn-ghost" onClick={()=>cmd("bold")} title="Bold (Ctrl+B)" style={{fontSize:12, padding:"6px 10px"}}><b>B</b></button>
           <button className="btn btn-ghost" onClick={()=>cmd("italic")} title="Italic (Ctrl+I)" style={{fontSize:12, padding:"6px 10px"}}><i>I</i></button>
           <button className="btn btn-ghost" onClick={()=>cmd("underline")} title="Underline (Ctrl+U)" style={{fontSize:12, padding:"6px 10px"}}><u>U</u></button>

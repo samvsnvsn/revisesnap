@@ -85,12 +85,20 @@ export default function PDFImport(){
     <div>
       <div className="card">
         <h1 className="h1">PDF → Notes</h1>
-        <input className="input" type="file" accept="application/pdf" onChange={onSelect} />
-        <p className="p" style={{marginTop:6}}>Upload a PDF (up to 20 pages processed).</p>
-        <textarea className="input" rows={12} value={text} onChange={e=>setText(e.target.value)} style={{marginTop:8}}></textarea>
-        <div style={{marginTop:8,display:"flex",gap:8,flexWrap:"wrap"}}>
-          <button className="btn btn-primary" disabled={!text || busy} onClick={toNotes}>Make Notes →</button>
-        </div>
+        <p className="p" style={{marginBottom:10}}>Upload a PDF file to extract text (up to 20 pages).</p>
+        <label className="btn btn-primary" style={{cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8}}>
+          📄 Select PDF File
+          <input type="file" accept="application/pdf,.pdf" onChange={onSelect} style={{display:"none"}} disabled={busy} />
+        </label>
+        {busy && <p className="p" style={{marginTop:8,color:"var(--primary)"}}>Processing PDF... ⏳</p>}
+        {text && (
+          <>
+            <textarea className="input" rows={12} value={text} onChange={e=>setText(e.target.value)} style={{marginTop:12}} placeholder="Extracted text will appear here..."></textarea>
+            <div style={{marginTop:8,display:"flex",gap:8,flexWrap:"wrap"}}>
+              <button className="btn btn-primary" disabled={!text || busy} onClick={toNotes}>Make Notes →</button>
+            </div>
+          </>
+        )}
       </div>
       {thumbs.length>0 && (
         <div className="card" style={{marginTop:12}}>

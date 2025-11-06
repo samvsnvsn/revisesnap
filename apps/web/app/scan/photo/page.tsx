@@ -58,8 +58,18 @@ export default function PhotoOCR(){
     <div>
       <div className="card">
         <h1 className="h1">Photo → OCR → Notes</h1>
-        <input className="input" type="file" accept="image/*" onChange={onSelect} />
-        <p className="p" style={{marginTop:6}}>Pick a photo of your board/notebook. Works offline (on-device).</p>
+        <p className="p" style={{marginBottom:10}}>Take a photo or upload an image. OCR works offline (on-device).</p>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <label className="btn btn-primary" style={{cursor:"pointer"}}>
+            📷 Take Photo
+            <input type="file" accept="image/*" capture="environment" onChange={onSelect} style={{display:"none"}} disabled={busy} />
+          </label>
+          <label className="btn btn-ghost" style={{cursor:"pointer"}}>
+            🖼️ Upload Image
+            <input type="file" accept="image/*" onChange={onSelect} style={{display:"none"}} disabled={busy} />
+          </label>
+        </div>
+        {busy && <p className="p" style={{marginTop:8,color:"var(--primary)"}}>Processing... ⏳</p>}
       </div>
       <div className="grid2" style={{marginTop:12}}>
         <div className="card">
