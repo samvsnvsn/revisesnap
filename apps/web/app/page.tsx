@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 function getWeeklyGoal(): number {
   try {
@@ -105,11 +106,11 @@ export default function Page() {
         <h1 className="h1">Welcome to ReviseSnap</h1>
         <p className="p">Create notes, scan material, and review efficiently.</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-          <a className="btn btn-primary" href="/notes/blank" style={{ flex: "1 1 auto" }}>
+          <Link className="btn btn-primary" href="/notes/blank" style={{ flex: "1 1 auto" }}>
             ✏️ New Note
-          </a>
-          <a className="btn btn-ghost" href="/scan">📷 Scan</a>
-          <a className="btn btn-ghost" href="/notes">📄 All Notes</a>
+          </Link>
+          <Link className="btn btn-ghost" href="/scan">📷 Scan</Link>
+          <Link className="btn btn-ghost" href="/notes">📄 All Notes</Link>
         </div>
       </div>
 
