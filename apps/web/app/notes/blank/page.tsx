@@ -151,10 +151,13 @@ export default function BlankNote(){
       if (isPenInput.current) {
         // Pen detected - draw mode
       } else {
-        // Touch or mouse - allow typing
+        // Touch or mouse - allow typing, focus editor
+        editorRef.current?.focus();
         return;
       }
     } else if (mode === "type") {
+      // In type mode, focus editor on click
+      editorRef.current?.focus();
       return;
     }
 
@@ -297,14 +300,42 @@ export default function BlankNote(){
   useEffect(()=>{ if (mode==="type" || mode==="auto") editorRef.current?.focus(); }, [mode]);
 
   return (
-    <div className="wrap" style={isFullscreen ? {
-      position: "fixed",
-      inset: 0,
-      zIndex: 1000,
-      background: "var(--bg)",
-      overflow: "auto",
-      padding: "16px"
-    } : undefined}>
+    <>
+      {/* Fixed exit button in top-right corner for fullscreen */}
+      {isFullscreen && (
+        <button
+          onClick={()=>setIsFullscreen(false)}
+          title="Exit Fullscreen (ESC)"
+          style={{
+            position: "fixed",
+            top: 16,
+            right: 16,
+            zIndex: 1001,
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            width: 40,
+            height: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            fontSize: 20,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            color: "var(--text)"
+          }}
+        >
+          ×
+        </button>
+      )}
+      <div className="wrap" style={isFullscreen ? {
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        background: "var(--bg)",
+        overflow: "auto",
+        padding: "16px"
+      } : undefined}>
       <div className="card">
         {isFullscreen && (
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,paddingBottom:12,borderBottom:"1px solid var(--border-light)"}}>
@@ -477,15 +508,23 @@ export default function BlankNote(){
           style={{
             position:"absolute",
             inset:0,
-            padding:40,
+            padding:16,
             outline:"none",
             fontSize:16,
             lineHeight:1.6,
             overflow:"hidden",
             zIndex: 2,
-            pointerEvents: mode==="draw" || mode==="erase" ? "none" : "auto"
+            whiteSpace: "pre-wrap",
+            cursor: mode==="type" || (mode==="auto" && !isPenInput.current) ? "text" : "default",
+            pointerEvents: mode==="draw" || mode==="erase" || mode==="highlight" ? "none" : "auto"
           }}
           onInput={()=>{ scheduleSave(); }}
+          onClick={(e)=>{
+            if (mode === "type" || mode === "auto") {
+              e.stopPropagation();
+              editorRef.current?.focus();
+            }
+          }}
         ></div>
         <canvas
           ref={canvasRef}
@@ -503,5 +542,6 @@ export default function BlankNote(){
         />
       </div>
     </div>
+    </>
   );
 }
