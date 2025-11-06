@@ -47,6 +47,7 @@ export default function BlankNote(){
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [template, setTemplate] = useState<Template>("blank");
+  const [showSaved, setShowSaved] = useState(false);
 
   const paperW = 900, paperH = 1200;
   const editorRef = useRef<HTMLDivElement>(null);
@@ -111,6 +112,24 @@ export default function BlankNote(){
       };
       saveDoc(doc);
     }, 350);
+  }
+
+  function manualSave(){
+    if (typeof window==="undefined") return;
+    window.clearTimeout(saveTimer.current);
+    const doc: NoteDoc = {
+      id,
+      title,
+      folder: currentFolder || "",
+      tags: tags || [],
+      drawing: canvasRef.current ? canvasRef.current.toDataURL("image/png") : "",
+      text: editorRef.current?.innerHTML || ""
+    };
+    saveDoc(doc);
+
+    // Show "Saved!" feedback
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 2000);
   }
 
   function addTag(){
@@ -454,6 +473,9 @@ export default function BlankNote(){
           <div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
             <input type="color" value={pen} onChange={e=>setPen(e.target.value)} title="Pen color" style={{width:32,height:32,border:"1px solid var(--border)",borderRadius:6,cursor:"pointer"}} />
             <input type="range" min={1} max={16} value={size} onChange={e=>setSize(Number(e.target.value))} title="Pen size" style={{width:80}} />
+            <button className="btn btn-primary" onClick={manualSave} title="Save Note (Ctrl+S)" style={{fontSize:12, padding:"6px 12px", position:"relative"}}>
+              💾 {showSaved ? "Saved!" : "Save"}
+            </button>
             <button className="btn btn-ghost" onClick={()=>setIsFullscreen(!isFullscreen)} title={isFullscreen?"Exit Fullscreen":"Enter Fullscreen"} style={{fontSize:12, padding:"6px 12px"}}>
               {isFullscreen ? "⊗" : "⛶"} {isFullscreen ? "Exit" : "Fullscreen"}
             </button>
@@ -491,19 +513,16 @@ export default function BlankNote(){
 
       <div className={`canvas-wrap template-${template}`} style={{
         position:"relative",
-        width: isFullscreen ? "100%" : paperW,
-        maxWidth: isFullscreen ? "1400px" : paperW,
-        height: isFullscreen ? "auto" : paperH,
-        minHeight: isFullscreen ? "calc(100vh - 200px)" : paperH,
-        aspectRatio: isFullscreen ? "3/4" : undefined,
+        width: paperW,
+        height: paperH,
         marginTop:12,
-        marginLeft: isFullscreen ? "auto" : 0,
-        marginRight: isFullscreen ? "auto" : 0
+        marginLeft: "auto",
+        marginRight: "auto"
       }}>
         <div
           ref={editorRef}
           className="note-editor"
-          contentEditable
+          contentEditable={mode === "type" || mode === "auto"}
           suppressContentEditableWarning
           style={{
             position:"absolute",
@@ -512,15 +531,21 @@ export default function BlankNote(){
             outline:"none",
             fontSize:16,
             lineHeight:1.6,
-            overflow:"hidden",
-            zIndex: 2,
+            overflow:"auto",
+            zIndex: mode === "type" ? 3 : 1,
             whiteSpace: "pre-wrap",
-            cursor: mode==="type" || (mode==="auto" && !isPenInput.current) ? "text" : "default",
-            pointerEvents: mode==="draw" || mode==="erase" || mode==="highlight" ? "none" : "auto"
+            cursor: mode==="type" || mode==="auto" ? "text" : "default",
+            pointerEvents: "auto",
+            userSelect: mode === "type" || mode === "auto" ? "text" : "none"
           }}
           onInput={()=>{ scheduleSave(); }}
-          onClick={(e)=>{
-            if (mode === "type" || mode === "auto") {
+          onPointerDown={(e)=>{
+            if (mode === "type") {
+              // Type mode - allow text editing
+              e.stopPropagation();
+              editorRef.current?.focus();
+            } else if (mode === "auto" && e.pointerType !== "pen") {
+              // Auto mode with touch/mouse - allow typing
               e.stopPropagation();
               editorRef.current?.focus();
             }
