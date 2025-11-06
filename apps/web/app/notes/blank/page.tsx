@@ -39,7 +39,7 @@ export default function BlankNote(){
   const [pen, setPen] = useState<string>("#0F172A");
   const [size, setSize] = useState<number>(3);
   const [highlightColor, setHighlightColor] = useState<HighlightColor>("yellow");
-  const [highlightOpacity, setHighlightOpacity] = useState<number>(0.3);
+  const [highlightOpacity, setHighlightOpacity] = useState<number>(0.15);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [drawData, setDrawData] = useState<string>("");
   const [showMathInput, setShowMathInput] = useState(false);
@@ -181,6 +181,26 @@ export default function BlankNote(){
     // Show "Saved!" feedback
     setShowSaved(true);
     setTimeout(() => setShowSaved(false), 2000);
+  }
+
+  function saveAs(){
+    if (typeof window==="undefined") return;
+    const newId = uid();
+    const newTitle = prompt("Enter new note title:", title + " (copy)");
+    if (!newTitle) return;
+
+    const doc: NoteDoc = {
+      id: newId,
+      title: newTitle,
+      folder: currentFolder || "",
+      tags: tags || [],
+      drawing: canvasRef.current ? canvasRef.current.toDataURL("image/png") : "",
+      text: editorRef.current?.innerHTML || ""
+    };
+    saveDoc(doc);
+
+    // Navigate to the new note
+    window.location.href = `/notes/blank?id=${newId}`;
   }
 
   function addTag(){
@@ -527,6 +547,9 @@ export default function BlankNote(){
             <button className="btn btn-primary" onClick={manualSave} title="Save Note (Ctrl+S)" style={{fontSize:12, padding:"6px 12px", position:"relative"}}>
               💾 {showSaved ? "Saved!" : "Save"}
             </button>
+            <button className="btn btn-ghost" onClick={saveAs} title="Save a copy with new name" style={{fontSize:12, padding:"6px 12px"}}>
+              💾+ Save As
+            </button>
             <button className="btn btn-ghost" onClick={()=>setIsFullscreen(!isFullscreen)} title={isFullscreen?"Exit Fullscreen":"Enter Fullscreen"} style={{fontSize:12, padding:"6px 12px"}}>
               {isFullscreen ? "⊗" : "⛶"} {isFullscreen ? "Exit" : "Fullscreen"}
             </button>
@@ -587,7 +610,8 @@ export default function BlankNote(){
             whiteSpace: "pre-wrap",
             cursor: mode==="type" || mode==="auto" ? "text" : "default",
             pointerEvents: "auto",
-            userSelect: mode === "type" || mode === "auto" ? "text" : "none"
+            userSelect: mode === "type" || mode === "auto" ? "text" : "none",
+            background: "transparent"
           }}
           onInput={()=>{ scheduleSave(); }}
           onPointerDown={(e)=>{
@@ -595,10 +619,48 @@ export default function BlankNote(){
               // Type mode - allow text editing
               e.stopPropagation();
               editorRef.current?.focus();
+
+              // Position cursor at click location
+              const range = document.caretRangeFromPoint?.(e.clientX, e.clientY) ||
+                           (document as any).caretPositionFromPoint?.(e.clientX, e.clientY);
+              if (range) {
+                const sel = window.getSelection();
+                if (sel) {
+                  sel.removeAllRanges();
+                  if ('startContainer' in range) {
+                    sel.addRange(range);
+                  } else {
+                    // Firefox uses caretPositionFromPoint
+                    const r = document.createRange();
+                    r.setStart(range.offsetNode, range.offset);
+                    r.collapse(true);
+                    sel.addRange(r);
+                  }
+                }
+              }
             } else if (mode === "auto" && e.pointerType !== "pen") {
               // Auto mode with touch/mouse - allow typing
               e.stopPropagation();
               editorRef.current?.focus();
+
+              // Position cursor at click location
+              const range = document.caretRangeFromPoint?.(e.clientX, e.clientY) ||
+                           (document as any).caretPositionFromPoint?.(e.clientX, e.clientY);
+              if (range) {
+                const sel = window.getSelection();
+                if (sel) {
+                  sel.removeAllRanges();
+                  if ('startContainer' in range) {
+                    sel.addRange(range);
+                  } else {
+                    // Firefox uses caretPositionFromPoint
+                    const r = document.createRange();
+                    r.setStart(range.offsetNode, range.offset);
+                    r.collapse(true);
+                    sel.addRange(r);
+                  }
+                }
+              }
             }
           }}
         ></div>
@@ -616,6 +678,34 @@ export default function BlankNote(){
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         />
+        {/* Small floating exit button inside canvas area when fullscreen */}
+        {isFullscreen && (
+          <button
+            onClick={()=>setIsFullscreen(false)}
+            title="Exit Fullscreen (ESC)"
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              zIndex: 999,
+              background: "rgba(255, 255, 255, 0.9)",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+              width: 32,
+              height: 32,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              fontSize: 18,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+              color: "var(--text)",
+              pointerEvents: "auto"
+            }}
+          >
+            ×
+          </button>
+        )}
       </div>
     </div>
     </>

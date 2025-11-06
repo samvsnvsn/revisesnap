@@ -123,7 +123,7 @@ body.warm{ --bg:#FFF7ED; }
 
 .swatch{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);cursor:pointer}
 
-.note-editor{background:var(--surface);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+.note-editor{background:transparent;color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
 
 /* Templates */
 .template-blank{background:var(--surface)}
