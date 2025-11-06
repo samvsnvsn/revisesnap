@@ -12,7 +12,8 @@ export const metadata = {
   title: "ReviseSnap",
   description: "Scan → Notes → Review",
   manifest: "/manifest.webmanifest",
-  themeColor: "#FBFDFE",
+  themeColor: "#F8FAFC",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "ReviseSnap" },
   icons: {
     icon: [ { url: "/icons/icon-192.png" }, { url: "/icons/icon-512.png" } ],

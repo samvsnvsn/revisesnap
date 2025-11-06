@@ -102,12 +102,14 @@ export default function Page() {
   return (
     <div>
       <div className="card">
-        <h1 className="h1">Ready for 5 minutes?</h1>
-        <p className="p">Quickly scan your material and start a short session.</p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <a className="btn btn-primary" href="/scan">📷 Scan</a>
-          <a className="btn btn-ghost" href="/material">📄 Recent notes</a>
-          <a className="btn btn-ghost" href="/notes/blank">✏️ Blank page</a>
+        <h1 className="h1">Welcome to ReviseSnap</h1>
+        <p className="p">Create notes, scan material, and review efficiently.</p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+          <a className="btn btn-primary" href="/notes/blank" style={{ flex: "1 1 auto" }}>
+            ✏️ New Note
+          </a>
+          <a className="btn btn-ghost" href="/scan">📷 Scan</a>
+          <a className="btn btn-ghost" href="/notes">📄 All Notes</a>
         </div>
       </div>
 
@@ -133,12 +135,12 @@ export default function Page() {
           <p className="p" style={{ marginTop: 6 }}>
             Do {weeklyGoal} short sessions · progress {progress}/{weeklyGoal}
           </p>
-          <div style={{ marginTop: 10, background: "#e5e7eb", borderRadius: 8, overflow: "hidden", height: 24 }}>
+          <div style={{ marginTop: 10, background: "#E2E8F0", borderRadius: 8, overflow: "hidden", height: 24 }}>
             <div
               style={{
                 width: `${percentage}%`,
                 height: "100%",
-                background: percentage >= 100 ? "#10b981" : "#f43f5e",
+                background: percentage >= 100 ? "#10b981" : "#3B82F6",
                 transition: "width 0.3s ease",
                 display: "flex",
                 alignItems: "center",
@@ -160,31 +162,31 @@ export default function Page() {
       </div>
 
       <div className="card" style={{ marginTop: 12 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>📊 Study Statistics</h2>
+        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: "var(--text)" }}>📊 Study Statistics</h2>
         <div className="grid2">
-          <div style={{ padding: 12, background: "#f0f9ff", borderRadius: 10 }}>
-            <div style={{ fontSize: 13, color: "#0369a1", fontWeight: 600 }}>Today</div>
-            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{stats.todayMinutes} min</div>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>🍅 {stats.todayPomodoros} pomodoros</div>
+          <div style={{ padding: 14, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--border-light)" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>Today</div>
+            <div style={{ fontSize: 26, fontWeight: 700, marginTop: 4, color: "var(--text)" }}>{stats.todayMinutes} min</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>🍅 {stats.todayPomodoros} pomodoros</div>
           </div>
-          <div style={{ padding: 12, background: "#fef3c7", borderRadius: 10 }}>
-            <div style={{ fontSize: 13, color: "#92400e", fontWeight: 600 }}>This Week</div>
-            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{stats.weekMinutes} min</div>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+          <div style={{ padding: 14, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--border-light)" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>This Week</div>
+            <div style={{ fontSize: 26, fontWeight: 700, marginTop: 4, color: "var(--text)" }}>{stats.weekMinutes} min</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
               {Math.round(stats.weekMinutes / 60)}h {stats.weekMinutes % 60}m
             </div>
           </div>
-          <div style={{ padding: 12, background: "#dcfce7", borderRadius: 10 }}>
-            <div style={{ fontSize: 13, color: "#166534", fontWeight: 600 }}>Streak</div>
-            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>🔥 {stats.streak}</div>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>days in a row</div>
+          <div style={{ padding: 14, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--border-light)" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>Streak</div>
+            <div style={{ fontSize: 26, fontWeight: 700, marginTop: 4, color: "var(--text)" }}>🔥 {stats.streak}</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>days in a row</div>
           </div>
-          <div style={{ padding: 12, background: "#fee2e2", borderRadius: 10 }}>
-            <div style={{ fontSize: 13, color: "#991b1b", fontWeight: 600 }}>Notes</div>
-            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>
+          <div style={{ padding: 14, background: "var(--bg)", borderRadius: 10, border: "1px solid var(--border-light)" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>Notes</div>
+            <div style={{ fontSize: 26, fontWeight: 700, marginTop: 4, color: "var(--text)" }}>
               {typeof window !== "undefined" ? JSON.parse(localStorage.getItem("rs_notes_index") || "[]").length : 0}
             </div>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>total notes created</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>total notes created</div>
           </div>
         </div>
       </div>

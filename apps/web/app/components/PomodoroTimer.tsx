@@ -7,8 +7,25 @@ export default function PomodoroTimer() {
   const [state, setState] = useState<PomodoroState>("idle");
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [sessionsCompleted, setSessionsCompleted] = useState(0);
   const intervalRef = useRef<any>(null);
+
+  // Load hidden state from localStorage
+  useEffect(() => {
+    try {
+      const hidden = localStorage.getItem("rs_pomodoro_hidden") === "true";
+      setIsHidden(hidden);
+    } catch {}
+  }, []);
+
+  function toggleHidden() {
+    const newHidden = !isHidden;
+    setIsHidden(newHidden);
+    try {
+      localStorage.setItem("rs_pomodoro_hidden", String(newHidden));
+    } catch {}
+  }
 
   // Settings
   const WORK_TIME = 25 * 60;
@@ -132,31 +149,60 @@ export default function PomodoroTimer() {
     longBreak: "#0EA5E9"
   };
 
+  // If hidden, show a small floating button to reopen
+  if (isHidden) {
+    return (
+      <button
+        onClick={toggleHidden}
+        style={{
+          position: "fixed",
+          bottom: 120,
+          right: 16,
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "50%",
+          width: 48,
+          height: 48,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          cursor: "pointer",
+          zIndex: 40,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 20
+        }}
+        title="Show Pomodoro Timer"
+      >
+        ⏱️
+      </button>
+    );
+  }
+
   if (isMinimized) {
     return (
       <div
         style={{
           position: "fixed",
-          bottom: 100,
+          bottom: 120,
           right: 16,
           background: stateColors[state],
           color: "#fff",
-          padding: "8px 16px",
-          borderRadius: 24,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          padding: "6px 12px",
+          borderRadius: 20,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
           cursor: "pointer",
           zIndex: 40,
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 6,
           fontWeight: 600,
-          fontSize: 14
+          fontSize: 13
         }}
         onClick={() => setIsMinimized(false)}
       >
         <span>⏱️</span>
         <span>{timeString}</span>
-        <span style={{ fontSize: 12, opacity: 0.9 }}>🍅 {sessionsCompleted}</span>
+        <span style={{ fontSize: 11, opacity: 0.9 }}>🍅 {sessionsCompleted}</span>
       </div>
     );
   }
@@ -165,31 +211,45 @@ export default function PomodoroTimer() {
     <div
       style={{
         position: "fixed",
-        bottom: 100,
+        bottom: 120,
         right: 16,
         background: "var(--surface)",
-        border: `2px solid ${stateColors[state]}`,
-        borderRadius: 16,
-        boxShadow: "var(--shadow)",
-        padding: 16,
-        width: 280,
+        border: `1px solid ${stateColors[state]}`,
+        borderRadius: 12,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+        padding: 12,
+        width: 200,
         zIndex: 40
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Pomodoro Timer</h3>
-        <div style={{ display: "flex", gap: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>Pomodoro</h3>
+        <div style={{ display: "flex", gap: 4 }}>
           <button
-            className="btn btn-ghost"
             onClick={() => setIsMinimized(true)}
-            style={{ padding: "4px 8px", fontSize: 12 }}
+            style={{
+              padding: "2px 6px",
+              fontSize: 14,
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--muted)"
+            }}
+            title="Minimize"
           >
-            _
+            −
           </button>
           <button
-            className="btn btn-ghost"
-            onClick={reset}
-            style={{ padding: "4px 8px", fontSize: 12 }}
+            onClick={toggleHidden}
+            style={{
+              padding: "2px 6px",
+              fontSize: 14,
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--muted)"
+            }}
+            title="Close"
           >
             ×
           </button>
@@ -199,15 +259,15 @@ export default function PomodoroTimer() {
       <div
         style={{
           textAlign: "center",
-          marginBottom: 16
+          marginBottom: 10
         }}
       >
-        <div style={{ fontSize: 12, color: stateColors[state], fontWeight: 600, marginBottom: 8 }}>
+        <div style={{ fontSize: 10, color: stateColors[state], fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.5px" }}>
           {stateLabels[state]}
         </div>
         <div
           style={{
-            fontSize: 48,
+            fontSize: 32,
             fontWeight: 700,
             fontFamily: "monospace",
             color: stateColors[state]
@@ -217,39 +277,39 @@ export default function PomodoroTimer() {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
         {state === "idle" && (
           <>
-            <button className="btn btn-primary" onClick={startWork} style={{ flex: 1, fontSize: 13 }}>
-              Start Focus
+            <button className="btn btn-primary" onClick={startWork} style={{ flex: 1, fontSize: 11, padding: "8px 10px" }}>
+              Start
             </button>
-            <button className="btn btn-ghost" onClick={startBreak} style={{ flex: 1, fontSize: 13 }}>
+            <button className="btn btn-ghost" onClick={startBreak} style={{ flex: 1, fontSize: 11, padding: "8px 10px" }}>
               Break
             </button>
           </>
         )}
         {state !== "idle" && (
           <>
-            <button className="btn btn-ghost" onClick={pause} style={{ flex: 1, fontSize: 13 }}>
+            <button className="btn btn-ghost" onClick={pause} style={{ flex: 1, fontSize: 11, padding: "8px 10px" }}>
               Pause
             </button>
-            <button className="btn btn-ghost" onClick={reset} style={{ flex: 1, fontSize: 13 }}>
+            <button className="btn btn-ghost" onClick={reset} style={{ flex: 1, fontSize: 11, padding: "8px 10px" }}>
               Reset
             </button>
           </>
         )}
       </div>
 
-      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
+      <div style={{ borderTop: "1px solid var(--border-light)", paddingTop: 8 }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", fontSize: 11, gap: 4 }}>
           <span style={{ color: "var(--muted)" }}>Today:</span>
-          <span style={{ fontWeight: 600 }}>🍅 {sessionsCompleted} pomodoros</span>
+          <span style={{ fontWeight: 600 }}>🍅 {sessionsCompleted}</span>
         </div>
         {"Notification" in window && Notification.permission === "default" && (
           <button
             className="btn btn-ghost"
             onClick={requestNotificationPermission}
-            style={{ width: "100%", marginTop: 8, fontSize: 12, padding: "6px 12px" }}
+            style={{ width: "100%", marginTop: 6, fontSize: 10, padding: "4px 8px" }}
           >
             Enable Notifications
           </button>

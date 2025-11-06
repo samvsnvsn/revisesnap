@@ -290,17 +290,19 @@ export default function BlankNote(){
   return (
     <div className="wrap">
       <div className="card">
-        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-          <input className="input" style={{flex:1, minWidth:220}} value={title} onChange={e=>{ setTitle(e.target.value); scheduleSave(); }} placeholder="Untitled note" />
-          <select className="input" value={currentFolder} onChange={e=>{ setCurrentFolder(e.target.value); scheduleSave(); }}>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginBottom:10}}>
+          <input className="input" style={{flex:1, minWidth:200, padding:"10px 12px", fontSize:15}} value={title} onChange={e=>{ setTitle(e.target.value); scheduleSave(); }} placeholder="Untitled note" />
+          <select className="input" style={{padding:"10px 12px", fontSize:13, minWidth:120}} value={currentFolder} onChange={e=>{ setCurrentFolder(e.target.value); scheduleSave(); }}>
             <option value="">(no folder)</option>
             {(typeof window!=="undefined" ? (JSON.parse(localStorage.getItem("rs_folders")||"[]") as string[]) : []).map(f=>(<option key={f} value={f}>{f}</option>))}
           </select>
-          <button className={"btn"+(mode==="auto"?" btn-primary":"")} onClick={()=>setMode("auto")} title="Auto: Pen draws, touch/mouse types">✨ Auto</button>
-          <button className={"btn"+(mode==="type"?" btn-primary":"")} onClick={()=>setMode("type")} title="Type">⌨️ Type</button>
-          <button className={"btn"+(mode==="draw"?" btn-primary":"")} onClick={()=>setMode("draw")} title="Draw">✏️ Draw</button>
-          <button className={"btn"+(mode==="highlight"?" btn-primary":"")} onClick={()=>setMode("highlight")} title="Highlighter">🖍️ Highlight</button>
-          <button className={"btn"+(mode==="erase"?" btn-primary":"")} onClick={()=>setMode("erase")} title="Erase">🧹 Erase</button>
+        </div>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+          <button className={"btn btn-ghost"+(mode==="auto"?" btn-primary":"")} onClick={()=>setMode("auto")} title="Auto: Pen draws, touch/mouse types" style={{fontSize:12, padding:"8px 12px"}}>✨ Auto</button>
+          <button className={"btn btn-ghost"+(mode==="type"?" btn-primary":"")} onClick={()=>setMode("type")} title="Type" style={{fontSize:12, padding:"8px 12px"}}>⌨️ Type</button>
+          <button className={"btn btn-ghost"+(mode==="draw"?" btn-primary":"")} onClick={()=>setMode("draw")} title="Draw" style={{fontSize:12, padding:"8px 12px"}}>✏️ Draw</button>
+          <button className={"btn btn-ghost"+(mode==="highlight"?" btn-primary":"")} onClick={()=>setMode("highlight")} title="Highlighter" style={{fontSize:12, padding:"8px 12px"}}>🖍️ Highlight</button>
+          <button className={"btn btn-ghost"+(mode==="erase"?" btn-primary":"")} onClick={()=>setMode("erase")} title="Erase" style={{fontSize:12, padding:"8px 12px"}}>🧹 Erase</button>
         </div>
         {mode === "highlight" && (
           <div style={{marginTop:10,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
@@ -336,19 +338,19 @@ export default function BlankNote(){
           </div>
         )}
         <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          <b style={{fontSize:14}}>📋 Template:</b>
-          <button className={"btn btn-ghost"+(template==="blank"?" btn-primary":"")} onClick={()=>setTemplate("blank")}>Blank</button>
-          <button className={"btn btn-ghost"+(template==="cornell"?" btn-primary":"")} onClick={()=>setTemplate("cornell")}>Cornell</button>
-          <button className={"btn btn-ghost"+(template==="grid"?" btn-primary":"")} onClick={()=>setTemplate("grid")}>Grid</button>
-          <button className={"btn btn-ghost"+(template==="lined"?" btn-primary":"")} onClick={()=>setTemplate("lined")}>Lined</button>
-          <button className={"btn btn-ghost"+(template==="dots"?" btn-primary":"")} onClick={()=>setTemplate("dots")}>Dots</button>
+          <b style={{fontSize:12,color:"var(--muted)"}}>📋 Template:</b>
+          <button className={"btn btn-ghost"+(template==="blank"?" btn-primary":"")} onClick={()=>setTemplate("blank")} style={{fontSize:12, padding:"6px 12px"}}>Blank</button>
+          <button className={"btn btn-ghost"+(template==="cornell"?" btn-primary":"")} onClick={()=>setTemplate("cornell")} style={{fontSize:12, padding:"6px 12px"}}>Cornell</button>
+          <button className={"btn btn-ghost"+(template==="grid"?" btn-primary":"")} onClick={()=>setTemplate("grid")} style={{fontSize:12, padding:"6px 12px"}}>Grid</button>
+          <button className={"btn btn-ghost"+(template==="lined"?" btn-primary":"")} onClick={()=>setTemplate("lined")} style={{fontSize:12, padding:"6px 12px"}}>Lined</button>
+          <button className={"btn btn-ghost"+(template==="dots"?" btn-primary":"")} onClick={()=>setTemplate("dots")} style={{fontSize:12, padding:"6px 12px"}}>Dots</button>
         </div>
         <div style={{marginTop:10,display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          <b style={{fontSize:14}}>🏷️ Tags:</b>
+          <b style={{fontSize:12,color:"var(--muted)"}}>🏷️ Tags:</b>
           {tags.map(tag => (
-            <span key={tag} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",background:"#e0f2fe",color:"#0369a1",borderRadius:8,fontSize:13}}>
+            <span key={tag} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"4px 10px",background:"var(--bg)",border:"1px solid var(--border-light)",color:"var(--text)",borderRadius:6,fontSize:12}}>
               {tag}
-              <button onClick={()=>removeTag(tag)} style={{border:0,background:"transparent",cursor:"pointer",padding:0,marginLeft:2,color:"#0369a1",fontWeight:"bold"}}>×</button>
+              <button onClick={()=>removeTag(tag)} style={{border:0,background:"transparent",cursor:"pointer",padding:0,marginLeft:2,color:"var(--muted)",fontWeight:"bold",fontSize:14}}>×</button>
             </span>
           ))}
           <input
@@ -357,26 +359,26 @@ export default function BlankNote(){
             value={newTag}
             onChange={e=>setNewTag(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); addTag(); }}}
-            style={{width:120,padding:"4px 10px",fontSize:13}}
+            style={{width:120,padding:"6px 10px",fontSize:12}}
           />
-          <button className="btn btn-ghost" onClick={addTag} style={{padding:"4px 10px",fontSize:13}}>+ Add</button>
+          <button className="btn btn-ghost" onClick={addTag} style={{padding:"6px 10px",fontSize:12}}>+ Add</button>
         </div>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-          <button className="btn btn-ghost" onClick={()=>cmd("bold")} title="Bold (Ctrl+B)"><b>B</b></button>
-          <button className="btn btn-ghost" onClick={()=>cmd("italic")} title="Italic (Ctrl+I)"><i>I</i></button>
-          <button className="btn btn-ghost" onClick={()=>cmd("underline")} title="Underline (Ctrl+U)"><u>U</u></button>
-          <button className="btn btn-ghost" onClick={()=>cmd("formatBlock","H2")}>H2</button>
-          <button className="btn btn-ghost" onClick={()=>cmd("insertUnorderedList")}>• List</button>
-          <button className="btn btn-ghost" onClick={()=>cmd("insertOrderedList")}>1. List</button>
-          <button className="btn btn-ghost" onClick={()=>setShowMathInput(true)} title="Insert Math (Ctrl+M)">∑ Math</button>
-          <label className="btn btn-ghost" style={{cursor:"pointer"}}>🖼️ Image
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+          <button className="btn btn-ghost" onClick={()=>cmd("bold")} title="Bold (Ctrl+B)" style={{fontSize:12, padding:"6px 10px"}}><b>B</b></button>
+          <button className="btn btn-ghost" onClick={()=>cmd("italic")} title="Italic (Ctrl+I)" style={{fontSize:12, padding:"6px 10px"}}><i>I</i></button>
+          <button className="btn btn-ghost" onClick={()=>cmd("underline")} title="Underline (Ctrl+U)" style={{fontSize:12, padding:"6px 10px"}}><u>U</u></button>
+          <button className="btn btn-ghost" onClick={()=>cmd("formatBlock","H2")} style={{fontSize:12, padding:"6px 10px"}}>H2</button>
+          <button className="btn btn-ghost" onClick={()=>cmd("insertUnorderedList")} style={{fontSize:12, padding:"6px 10px"}}>• List</button>
+          <button className="btn btn-ghost" onClick={()=>cmd("insertOrderedList")} style={{fontSize:12, padding:"6px 10px"}}>1. List</button>
+          <button className="btn btn-ghost" onClick={()=>setShowMathInput(true)} title="Insert Math (Ctrl+M)" style={{fontSize:12, padding:"6px 10px"}}>∑ Math</button>
+          <label className="btn btn-ghost" style={{cursor:"pointer",fontSize:12, padding:"6px 10px"}}>🖼️ Image
             <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{ const f=e.target.files?.[0]; if(f) insertImageFile(f); (e.currentTarget as HTMLInputElement).value=""; }} />
           </label>
-          <div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center"}}>
-            <input type="color" value={pen} onChange={e=>setPen(e.target.value)} title="Pen color" />
-            <input type="range" min={1} max={16} value={size} onChange={e=>setSize(Number(e.target.value))} title="Pen size" />
-            <button className="btn" onClick={exportPng}>Export PNG</button>
-            <button className="btn" onClick={exportPdf}>Export PDF</button>
+          <div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+            <input type="color" value={pen} onChange={e=>setPen(e.target.value)} title="Pen color" style={{width:32,height:32,border:"1px solid var(--border)",borderRadius:6,cursor:"pointer"}} />
+            <input type="range" min={1} max={16} value={size} onChange={e=>setSize(Number(e.target.value))} title="Pen size" style={{width:80}} />
+            <button className="btn btn-ghost" onClick={exportPng} style={{fontSize:12, padding:"6px 12px"}}>PNG</button>
+            <button className="btn btn-ghost" onClick={exportPdf} style={{fontSize:12, padding:"6px 12px"}}>PDF</button>
           </div>
         </div>
         {showMathInput && (
