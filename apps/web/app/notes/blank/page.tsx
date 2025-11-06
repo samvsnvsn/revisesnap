@@ -48,8 +48,33 @@ export default function BlankNote(){
   const [newTag, setNewTag] = useState("");
   const [template, setTemplate] = useState<Template>("blank");
   const [showSaved, setShowSaved] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
 
-  const paperW = 900, paperH = 1200;
+  // Larger canvas for tablets like Honor Magic Pad 2
+  const getCanvasSize = () => {
+    if (typeof window === "undefined") return { w: 900, h: 1200 };
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const isLandscape = screenWidth > screenHeight;
+    const isLargeScreen = screenWidth >= 768;
+
+    if (isLargeScreen) {
+      // Tablet size - use more space
+      if (isLandscape) {
+        // Landscape: wider canvas
+        return { w: Math.min(1400, screenWidth - 100), h: Math.min(1000, screenHeight - 300) };
+      } else {
+        // Portrait: taller canvas
+        return { w: Math.min(1000, screenWidth - 100), h: Math.min(1600, screenHeight - 300) };
+      }
+    }
+    // Phone size - default
+    return { w: 900, h: 1200 };
+  };
+
+  const [canvasSize, setCanvasSize] = useState(getCanvasSize());
+  const paperW = canvasSize.w;
+  const paperH = canvasSize.h;
   const editorRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef<boolean>(false);
@@ -72,7 +97,33 @@ export default function BlankNote(){
       setTitle("Blank note");
       setTimeout(()=>{ editorRef.current?.focus(); }, 50);
     }
-    // init canvas once
+    // Detect tablet and handle orientation changes
+    const detectTablet = () => {
+      if (typeof window === "undefined") return;
+      const screenWidth = window.innerWidth;
+      const isLargeScreen = screenWidth >= 768;
+      setIsTablet(isLargeScreen);
+    };
+
+    const handleResize = () => {
+      detectTablet();
+      const newSize = getCanvasSize();
+      setCanvasSize(newSize);
+    };
+
+    detectTablet();
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // Re-initialize canvas when size changes (orientation/resize)
+  useEffect(()=>{
     const c = canvasRef.current;
     if (c){
       const dpr = Math.max(1, Math.floor(window.devicePixelRatio||1));
@@ -85,7 +136,7 @@ export default function BlankNote(){
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [paperW, paperH]);
 
   function restoreCanvas(){
     const c = canvasRef.current; if (!c) return;
